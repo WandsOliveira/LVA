@@ -281,7 +281,7 @@ class Rod:
 
         def Barra_Final_Response(self, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento, Type):
 
-            u = np.zeros((len(self.KG), len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
+            u = np.zeros((len(self.Global_SEM), len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
 
             for i, omega in enumerate(self.Frequency):
                 omega = 2 * np.pi * self.Frequency[i-1]
