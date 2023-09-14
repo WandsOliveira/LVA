@@ -198,9 +198,9 @@ class Rod:
                 vv = vv + 1
 
 
-            self.S = self.Spectral_Dynamics_Matrix(E, rho, L, self.A, Rod_Number, self.GL_Elemento_SEM, self.Global_SEM, self.Frequency )
 
-        def Spectral_Dynamics_Matrix(self, E, rho, L, A, Rod_Number, GL_Elemento_SEM, Global_SEM, Frequency):
+
+        def Spectral_Dynamics_Matrix(self, E, rho, L, A, Rod_Number, GL_Elemento_SEM, Global_SEM, omega):
             ## Alocação de memoria matrizes de Massa e Rigidez
             S = np.zeros((Global_SEM, Global_SEM), dtype= complex) #  Spectral Dynamics Matrix
 
@@ -210,12 +210,12 @@ class Rod:
                 for ww in range(0, len(row_aux) - 1, 1):
                     row_columns = row_aux[ ww: ww + 2]
                     # Matrizes locais
-                    omega = 2 * np.pi * Frequency   # Frequencia angular
+
 
                     K_L = omega * np.sqrt(rho[0]/E[0])  # Número de Onda da barra
 
                     Se = (E[0] * A / L) * np.array([[K_L * L * (1/np.tan(K_L * L)), - K_L * L * (1/np.sin(K_L * L))], [- K_L * L * (1/np.sin(K_L * L)), K_L * L * (1/np.tan(K_L * L))]])
-
+                    
                     # Montagem da matriz de massa e rigidez global
                     Matrix_Aux = np.zeros((3, 3), dtype= complex)    # Matriz auxiliar da rigidez
                     Matrix_Aux[1 : 3, 1 : 3] =  Se[:,:]
@@ -285,9 +285,9 @@ class Rod:
 
             for i, omega in enumerate(self.Frequency):
                 omega = 2 * np.pi * self.Frequency[i-1]
-                Dinamica = self.KG - (omega ** 2) * self.MG  # Matriz de rigidez dinâmica
+                self.S = self.Spectral_Dynamics_Matrix(self.E, self.rho, self.L, self.A, self.Rod_Number, self.GL_Elemento_SEM, self.Global_SEM, omega)
 
-                F, D = self.Barra_Condicao_Contorno(Dinamica, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento)
+                F, D = self.Barra_Condicao_Contorno(self.S, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento)
                 u[:, i-1] = np.linalg.solve(D, F)
 
             return  self.Plot_FRF(self.Frequency, u, Type)  # Chama a função Plot_FRF para plotar a receptância
