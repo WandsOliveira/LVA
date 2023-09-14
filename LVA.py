@@ -169,7 +169,126 @@ class Rod:
                 u[:, i-1] = np.linalg.solve(D, F)
 
             return  self.Plot_FRF(self.Frequency, u, Type)  # Chama a função Plot_FRF para plotar a receptância
-
-
-
         
+    class SEM:
+         
+        def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Rod_Number) -> None:
+
+            self.E = E * (1 + 1j * eta)
+            self.rho = rho
+            self.b = b
+            self.h = h
+            self.L = L
+            self.Nc = Nc
+            self.Frequency = np.arange(1, Frequency + 1)
+            self.Rod_Number = Rod_Number
+            self.A = self.b * self.h  # Área
+            self.Nos_SEM = 2
+            self.Elementos_SEM = self.Nos_SEM - 1
+            self.Gdl = 1
+            self.Nos_Principais_SEM = 2 + (self.Nc - 1)
+            self.Global_SEM= self.Gdl * (self.Nos_Principais_SEM + (self.Elementos_SEM - 1) * self.Rod_Number)
+            self.GL_Elemento_SEM = np.zeros((self.Rod_Number, self.Gdl * (2 + (self.Elementos_SEM - 1))))
+            self.GDL_Principais_SEM = np.arange(0, self.Nos_Principais_SEM)
+            # Preenchimento dos nós principais
+            vv = 0
+            for ii in range(self.Rod_Number):
+                self.GL_Elemento_SEM[ii, 0] = self.GDL_Principais_SEM[vv]
+                self.GL_Elemento_SEM[ii, -1] = self.GDL_Principais_SEM[vv + 1]
+                vv = vv + 1
+
+
+            self.S = self.Spectral_Dynamics_Matrix(E, rho, L, self.A, Rod_Number, self.GL_Elemento_SEM, self.Global_SEM, self.Frequency )
+
+        def Spectral_Dynamics_Matrix(self, E, rho, L, A, Rod_Number, GL_Elemento_SEM, Global_SEM, Frequency):
+            ## Alocação de memoria matrizes de Massa e Rigidez
+            S = np.zeros((Global_SEM, Global_SEM), dtype= complex) #  Spectral Dynamics Matrix
+
+            for i in np.arange(Rod_Number):
+
+                row_aux = GL_Elemento_SEM[i,:]
+                for ww in range(0, len(row_aux) - 1, 1):
+                    row_columns = row_aux[ ww: ww + 2]
+                    # Matrizes locais
+                    omega = 2 * np.pi * Frequency   # Frequencia angular
+
+                    K_L = omega * np.sqrt(rho[0]/E[0])  # Número de Onda da barra
+
+                    Se = (E[0] * A / L) * np.array([[K_L * L * (1/np.tan(K_L * L)), - K_L * L * (1/np.sin(K_L * L))], [- K_L * L * (1/np.sin(K_L * L)), K_L * L * (1/np.tan(K_L * L))]])
+
+                    # Montagem da matriz de massa e rigidez global
+                    Matrix_Aux = np.zeros((3, 3), dtype= complex)    # Matriz auxiliar da rigidez
+                    Matrix_Aux[1 : 3, 1 : 3] =  Se[:,:]
+                    Matrix_Aux[0, 1 : 3] =  row_columns[0:2]
+                    Matrix_Aux[1 : 3, 0] =  row_columns[0:2]         
+ 
+                    for j in range(2):
+                        Columns_aux = int(np.real(Matrix_Aux[0, j + 1]))
+
+                        for k in range(2):
+                            Line_aux = int(np.real(Matrix_Aux[k + 1, 0]))
+
+                            S[Line_aux, Columns_aux] += Matrix_Aux[k + 1, j + 1]           # Matriz rigidez
+
+             
+            return S
+        
+        def Barra_Condicao_Contorno(self, Matriz, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento):
+            F = np.zeros((len(Matriz)))               # Alocação de Memória : Força 
+            F[GDL_Forca] = Intensidade_Forca          # Contorno da força
+
+            Matriz_Nova = None 
+            F_Novo = None
+
+            try:
+                if Contorno_Deslocamento == 'Livre - Livre':
+                    Matriz_Nova = np.copy(Matriz)
+                    F_Novo = np.copy(F)
+                elif Contorno_Deslocamento == 'Engastado - Livre':
+                    Matriz_Nova = Matriz[1:, 1:]
+                    F_Novo  = F[1:]
+                elif Contorno_Deslocamento == 'Livre - Engastado':
+                    Matriz_Nova = Matriz[:-1, :-1]
+                    F_Novo = F[:-1]
+                else:
+                    raise ValueError("Condição de deslocamento inválida")
+            except ValueError as e:
+                print(f"Erro: {e}")
+
+            return F_Novo , Matriz_Nova 
+
+        def Plot_FRF(self, Frequencia, u, Type):
+            plt.figure( figsize= (12, 4))
+            try: 
+                if Type == 'Receptancia':
+                    plt.plot(Frequencia, 20* np.log10(np.abs(u[1, :])), color='red', linestyle='-', label = ' FEM')
+                    plt.ylabel('Receptância dB ')
+                    plt.xlabel('Frequência (Hz)')
+                    plt.grid(True)
+                    plt.legend()
+                    plt.show()
+                elif Type == 'Transmitancia':
+                    plt.plot(Frequencia, 20* np.log10(np.abs(u[1, :]) / np.abs(u[0, :])), color='red', linestyle='-', label = ' FEM')
+                    plt.ylabel('Transmitancia dB ')
+                    plt.xlabel('Frequência (Hz)')
+                    plt.grid(True)
+                    plt.legend()
+                    plt.show()
+                else:
+                    raise ValueError("Tipo de plot inválido!")
+            except ValueError as e:
+                print(f"Erro: {e}")
+
+        def Barra_Final_Response(self, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento, Type):
+
+            u = np.zeros((len(self.KG), len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
+
+            for i, omega in enumerate(self.Frequency):
+                omega = 2 * np.pi * self.Frequency[i-1]
+                Dinamica = self.KG - (omega ** 2) * self.MG  # Matriz de rigidez dinâmica
+
+                F, D = self.Barra_Condicao_Contorno(Dinamica, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento)
+                u[:, i-1] = np.linalg.solve(D, F)
+
+            return  self.Plot_FRF(self.Frequency, u, Type)  # Chama a função Plot_FRF para plotar a receptância
+            
