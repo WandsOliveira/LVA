@@ -159,7 +159,7 @@ class Rod:
 
             u = np.zeros((1 , len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
 
-            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency)):
+            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency), desc="Calculando FEM:" ):
                 omega = 2 * np.pi * self.Frequency[i-1]
                 U = np.zeros((self.Global_FEM))
                 Dinamica = self.KG - (omega ** 2) * self.MG  # Matriz de rigidez dinâmica
@@ -271,7 +271,7 @@ class Rod:
 
             u = np.zeros((self.Global_SEM, len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
 
-            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency)):
+            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency), desc="Calculando SEM:" ):
                 omega = 2 * np.pi * self.Frequency[i-1]
                 self.S = self.Spectral_Dynamics_Matrix(self.E, self.rho, self.L, self.A, self.Rod_Number, self.GL_Elemento_SEM, self.Global_SEM, omega)
                 U = np.zeros((self.Global_SEM))
@@ -520,7 +520,7 @@ class Rod:
             FL = np.array([FL])
             u = np.zeros((1, len(self.Frequency)), dtype=complex)  # Alocação de Memória: Deslocamento
             beta = np.zeros((len(self.Frequency), self.Gdl), dtype= complex)
-            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency)):
+            for i, omega in tqdm(enumerate(self.Frequency), total=len(self.Frequency),desc="Calculando WFE:" ):
                 omega = 2 * np.pi * self.Frequency[i-1]
                 Dinamica = self.KG_WFE - (omega ** 2) * self.MG_WFE  # Matriz de rigidez dinâmica
                 F, D = self.Barra_Condicao_Contorno(Dinamica, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento)
