@@ -17,28 +17,28 @@ class Rod:
         pass
     
     class FEM:
-        def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Rod_Number, Nos) -> None:
-            self.E = E * (1 + 1j * eta)
-            self.rho = rho
+        def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Nos) -> None:
             self.b = b
             self.h = h
             self.L = L
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number = Nc * Rod_Number
+            self.Rod_Number = Nc * len(E)
+            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
+            self.E = np.tile(E*(1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
+            self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
             self.I = self.b * self.h ** 3 / 12  # Momento de Inércia
             self.Nos_FEM = self.Nos
             self.Elementos_FEM = self.Nos_FEM - 1
             self.Gdl = 1
-            self.Nos_Principais = 2 + (self.Nc - 1)
+            self.Nos_Principais = len(E) + 1 + ((len(E) * (self.Nc -1 )))
             self.Global_FEM = self.Gdl * (self.Nos_Principais + (self.Elementos_FEM - 1) * self.Rod_Number)
             self.GL_Elemento = np.zeros((self.Rod_Number, self.Gdl * (2 + (self.Elementos_FEM - 1))))
             self.L_FEM = self.L / (2 * self.Elementos_FEM)
             self.GDL_Principais = np.arange(0, self.Nos_Principais)
             self.u_max = self.GDL_Principais[-1]
-
             # Preenchimento dos nós principais
             vv = 0
             for ii in range(self.Rod_Number):
@@ -58,12 +58,13 @@ class Rod:
 
             self.GL_Elemento = self.GL_Elemento + M_aux
 
-            self.KG, self.MG = self.Barra_Matriz_Massa_Rigidez_Global(E, rho, self.L_FEM, self.A, self.Rod_Number, self.GL_Elemento, self.Global_FEM)
-
+            self.KG, self.MG = self.Barra_Matriz_Massa_Rigidez_Global(self.E, self.rho, self.L_FEM, self.A, self.Rod_Number, self.GL_Elemento, self.Global_FEM)
         def Barra_Matriz_Massa_Rigidez_Global(self, E, rho, L_FEM, A, Beam_Number, GL_Elemento, Global):
             ## Alocação de memoria matrizes de Massa e Rigidez
             KG = np.zeros((Global, Global), dtype= complex) # Rigidez
             MG = np.zeros((Global, Global), dtype= complex) # Massa
+
+            # Alocando materiais
 
             for i in np.arange(Beam_Number):
 
@@ -71,9 +72,8 @@ class Rod:
                 for ww in range(0, len(row_aux) - 1, 1):
                     row_columns = row_aux[ ww: ww + 2]
                     # Matrizes locais
-                    Ke = (E[0] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
-                    Me = rho[0] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
-
+                    Ke = (E[i] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
+                    Me = rho[i] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
                     KGe =   Ke  
                     MGe =   Me 
                     # Montagem da matriz de massa e rigidez global
@@ -177,7 +177,7 @@ class Rod:
             return u
     class SEM:
          
-        def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Rod_Number) -> None:
+        def __init__(self, E, rho, eta, b, h, L, Nc, Frequency) -> None:
 
             self.E = E * (1 + 1j * eta)
             self.rho = rho
@@ -186,12 +186,15 @@ class Rod:
             self.L = L
             self.Nc = Nc
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number = Nc * Rod_Number
+            self.Rod_Number = Nc * len(E)
+            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
+            self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
+            self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
             self.Nos_SEM = 2
             self.Elementos_SEM = self.Nos_SEM - 1
             self.Gdl = 1
-            self.Nos_Principais_SEM = 2 + (self.Nc - 1)
+            self.Nos_Principais_SEM =  len(E) + 1 + (len(E) * (self.Nc - 1))
             self.Global_SEM= self.Gdl * (self.Nos_Principais_SEM + (self.Elementos_SEM - 1) * self.Rod_Number)
             self.GL_Elemento_SEM = np.zeros((self.Rod_Number, self.Gdl * (2 + (self.Elementos_SEM - 1))))
             self.GDL_Principais_SEM = np.arange(0, self.Nos_Principais_SEM)
@@ -218,9 +221,9 @@ class Rod:
                     # Matrizes locais
 
 
-                    K_L = omega * np.sqrt(rho[0]/E[0])  # Número de Onda da barra
+                    K_L = omega * np.sqrt(rho[i]/E[i])  # Número de Onda da barra
 
-                    Se = (E[0] * A / L) * np.array([[K_L * L * (1/np.tan(K_L * L)), - K_L * L * (1/np.sin(K_L * L))], [- K_L * L * (1/np.sin(K_L * L)), K_L * L * (1/np.tan(K_L * L))]])
+                    Se = (E[i] * A / L) * np.array([[K_L * L * (1/np.tan(K_L * L)), - K_L * L * (1/np.sin(K_L * L))], [- K_L * L * (1/np.sin(K_L * L)), K_L * L * (1/np.tan(K_L * L))]])
                     
                     # Montagem da matriz de massa e rigidez global
                     Matrix_Aux = np.zeros((3, 3), dtype= complex)    # Matriz auxiliar da rigidez
@@ -287,30 +290,29 @@ class Rod:
             return u
     class WFE: 
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency,  Nos) -> None:
-            self.E = E 
-            Ec = E * (1 + 1j * eta)
-            self.rho = rho
             self.b = b
             self.h = h
             self.L = L
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number_WFE = 1
+            self.Rod_Number_WFE = len(E)
+            self.List_GL_Materials = list(range(0, self.Rod_Number_WFE  ))
+            self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
+            self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
             self.I = self.b * self.h ** 3 / 12  # Momento de Inércia
             self.Nos_WFE = self.Nos
             self.Elementos_WFE = self.Nos_WFE - 1
             self.Gdl = 1
-            self.Nos_Principais_WFE = 2 + (self.Nc - 1)
+            self.Nos_Principais_WFE = len(E) + 1 
             self.Global_WFE = self.Gdl * (self.Nos_Principais_WFE + (self.Elementos_WFE - 1) * self.Rod_Number_WFE)
             self.GL_Elemento_WFE = np.zeros((self.Rod_Number_WFE, self.Gdl * (2 + (self.Elementos_WFE - 1))))
             self.L_WFE = self.L / (2 * self.Elementos_WFE)
             self.GDL_Principais_WFE = np.arange(0, self.Nos_Principais_WFE)
-            self.u_max_WFE = self.GDL_Principais_WFE[-1]
             # Preenchimento dos nós principais
             vv = 0
-            for ii in range(1):
+            for ii in range(self.Rod_Number_WFE):
                 self.GL_Elemento_WFE[ii, 0] = self.GDL_Principais_WFE[vv]
                 self.GL_Elemento_WFE[ii, -1] = self.GDL_Principais_WFE[vv + 1]
                 vv = vv + 1
@@ -326,6 +328,7 @@ class Rod:
                     zz += 1 
 
             self.GL_Elemento_WFE = self.GL_Elemento_WFE + M_aux
+
             self.nl = np.array(self.GL_Elemento_WFE[0,0])
             self.nl = self.nl.astype(int)
             self.nr = np.array(self.GL_Elemento_WFE[-1, -1])
@@ -335,8 +338,11 @@ class Rod:
             self.ni = self.ni[self.ni != self.nl]  
             self.ni = self.ni[self.ni != self.nr] 
             self.ni = self.ni.astype(int)
-            
-            self.KG_WFE, self.MG_WFE = self.Barra_Matriz_Massa_Rigidez_Global(Ec, rho, self.L_WFE, self.A, self.Rod_Number_WFE, self.GL_Elemento_WFE, self.Global_WFE)
+            self.ni = np.unique(self.ni)
+
+
+
+            self.KG_WFE, self.MG_WFE = self.Barra_Matriz_Massa_Rigidez_Global(self.E, self.rho, self.L_WFE, self.A, self.Rod_Number_WFE, self.GL_Elemento_WFE, self.Global_WFE)
 
         def Barra_Matriz_Massa_Rigidez_Global(self, E, rho, L_FEM, A, Beam_Number, GL_Elemento, Global):
             ## Alocação de memoria matrizes de Massa e Rigidez
@@ -349,8 +355,8 @@ class Rod:
                 for ww in range(0, len(row_aux) - 1, 1):
                     row_columns = row_aux[ ww: ww + 2]
                     # Matrizes locais
-                    Ke = (E[0] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
-                    Me = rho[0] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
+                    Ke = (E[i] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
+                    Me = rho[i] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
 
                     KGe =   Ke  
                     MGe =   Me 
@@ -386,7 +392,6 @@ class Rod:
             plt.title("Matriz de Rigidez")
             plt.gca().invert_yaxis()  # Convenção do Matlab
             plt.show()
-
         def Barra_Condicao_Contorno(self, Matriz, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento):
             F = np.zeros((len(Matriz)))               # Alocação de Memória : Força 
             F[GDL_Forca] = Intensidade_Forca        # Contorno da força
@@ -411,28 +416,6 @@ class Rod:
 
             return F_Novo , Matriz_Nova 
 
-        def Plot_FRF(self, Frequencia, u, Type):
-            plt.figure( figsize= (12, 4))
-            try: 
-                if Type == 'Receptancia':
-                    plt.plot(Frequencia, 20* np.log10(np.abs(u[0, -1])), color='red', linestyle='-', label = ' WFE')
-                    plt.ylabel('Receptância dB ')
-                    plt.xlabel('Frequência (Hz)')
-                    plt.grid(True)
-                    plt.legend()
-                    plt.show()
-                elif Type == 'Transmitancia':
-                    plt.plot(Frequencia, 20* np.log10(np.abs(u[0, -1]) / np.abs(u[0, 0])), color='red', linestyle='-', label = ' WFE')
-                    plt.ylabel('Transmitancia dB ')
-                    plt.xlabel('Frequência (Hz)')
-                    plt.grid(True)
-                    plt.legend()
-                    plt.show()
-                else:
-                    raise ValueError("Tipo de plot inválido!")
-            except ValueError as e:
-                print(f"Erro: {e}")
-
         def Matriz_Rigidez_Dinamica_Condensada(self, D, nl, nr, ni, n):
 
 
@@ -441,7 +424,6 @@ class Rod:
 
             DRR = D[nr,nr]
 
-            DII = D[ni, ni]
             DII = np.zeros((len(ni),len(ni)), dtype= complex)
             
             for j in range(len(ni)):
@@ -479,26 +461,25 @@ class Rod:
             DRL = np.zeros((1, 1))
             DRL=  D[nr][nl]    
             
-
-            DLL = DLL - np.dot(DLI, np.linalg.solve(DII ,  DIL))
-            DRL = DRL - np.dot(DRI, np.linalg.solve(DII , DIL))
-            DLR = DLR - np.dot(DLI, np.linalg.solve(DII , DIR))
-            DRR = DRR - np.dot(DRI, np.linalg.solve(DII , DIR))
+            inv_DII = np.linalg.inv(DII)
+            DLL = DLL - np.dot(DLI, np.dot(inv_DII , DIL))
+            DRL = DRL - np.dot(DRI, np.dot(inv_DII , DIL))
+            DLR = DLR - np.dot(DLI, np.dot(inv_DII , DIR))
+            DRR = DRR - np.dot(DRI, np.dot(inv_DII , DIR))
 
             
             N = np.block([[np.zeros((1), dtype=complex), np.eye((1), dtype = complex)], [- DRL, -DRR]])
             
-            L = np.block([[np.eye((1), dtype = complex), np.zeros((1,1), dtype= complex)], [DLL, DLR]])
+            L = np.block([[np.eye((1), dtype = complex), np.zeros((1), dtype= complex)], [DLL, DLR]])
 
     
             eigenvalue, eigenvector = scipy.linalg.eig(N, L)
-            ind = np.argsort(eigenvalue)
+            ind = np.argsort(np.abs(eigenvalue))
             ind = ind[1]
             eigenvalue = eigenvalue[ind]
             eigenvector = N * eigenvector
             eigenvector = eigenvector[:,ind]
             eigenvector = eigenvector.reshape(-1, 1)
-
 
 
             return eigenvalue, eigenvector
@@ -508,34 +489,31 @@ class Rod:
             Ra[pos] = -1
             Ra = np.diag(Ra)
             R = np.block([[Ra, np.zeros(gdl, dtype = complex)], [np.zeros(gdl, dtype = complex), -1 * Ra]])
-
             phi_q = eigenvector[0, :]
             phi_q = np.array([phi_q])
-
             phi_F = eigenvector[1, :]
             phi_F = np.array([phi_F])
             phi_star = np.dot(R, eigenvector)
-
             phi_star_q = phi_star[0,:]
             phi_star_q = np.array([phi_star_q])
             phi_star_F = phi_star[1,:]
             phi_star_F = np.array([phi_star_F])
-     
-            A = np.block([[np.eye((1), dtype = complex), np.dot(np.linalg.solve(phi_F, phi_star_F), eigenvalue ** Nc)], [np.dot(np.linalg.solve(phi_star_F, phi_F), eigenvalue ** Nc), np.eye((1), dtype= complex)]])
-            Fo = np.block([[- np.linalg.solve(phi_F, F0)],[ np.linalg.solve(phi_star_F, FL)]])
-            Qe = np.block([[np.zeros(0, dtype = complex)], [np.zeros(0, dtype = complex)]])
-            
-            Qe = np.linalg.solve(A, Fo)
+
+            inv_phi_F = np.linalg.inv(phi_F)
+            inv_phi_star_F = np.linalg.inv(phi_star_F)
+            A =  np.block([[np.eye((1), dtype = complex), np.dot(np.dot(inv_phi_F, phi_star_F), eigenvalue ** Nc)], [np.dot(np.dot(inv_phi_star_F, phi_F), eigenvalue ** Nc), np.eye((1), dtype= complex)]])
+            Fo = np.block([[- np.dot(inv_phi_F, F0)],[ np.dot(inv_phi_star_F, FL)]])
+            inv_A = np.linalg.inv(A)
+            Qe = np.dot(inv_A, Fo)
             Q = Qe[0,:]
             Q_star = Qe[1,:]
 
             qe = np.zeros(([1, Nc + 1]), dtype = complex)
             Fe = np.zeros(([1, Nc + 1]), dtype = complex)
-
             for ke in range(1, Nc+2):
                 qe[:,ke - 1] = np.dot(np.dot(phi_q, eigenvalue ** (ke -1)), Q ) + np.dot(np.dot(phi_star_q, eigenvalue ** (Nc + 1 -ke)), Q_star ) 
                 Fe[:,ke - 1] = np.dot(np.dot(phi_F, eigenvalue ** (ke -1)), Q ) + np.dot(np.dot(phi_star_F, eigenvalue ** (Nc + 1 -ke)), Q_star ) 
-            
+
             return qe, Fe
         def Barra_Final_Response(self, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento, Type, F0, FL):
             F0 = np.array([F0])
