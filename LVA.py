@@ -133,27 +133,6 @@ class Rod:
 
             return F_Novo , Matriz_Nova 
 
-        def Plot_FRF(self, Frequencia, u, Type):
-            plt.figure( figsize= (12, 4))
-            try: 
-                if Type == 'Receptancia':
-                    plt.plot(Frequencia, 20* np.log10(np.abs(u[self.u_max, :])), color='red', linestyle='-', label = ' FEM')
-                    plt.ylabel('Receptância dB ')
-                    plt.xlabel('Frequência (Hz)')
-                    plt.grid(True)
-                    plt.legend()
-                    plt.show()
-                elif Type == 'Transmitancia':
-                    plt.plot(Frequencia, 20* np.log10(np.abs(u[self.u_max, :]) / np.abs(u[0, :])), color='red', linestyle='-', label = ' FEM')
-                    plt.ylabel('Transmitancia dB ')
-                    plt.xlabel('Frequência (Hz)')
-                    plt.grid(True)
-                    plt.legend()
-                    plt.show()
-                else:
-                    raise ValueError("Tipo de plot inválido!")
-            except ValueError as e:
-                print(f"Erro: {e}")
 
         def Barra_Final_Response(self, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento, Type):
 
