@@ -20,12 +20,12 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Nos) -> None:
             self.b = b
             self.h = h
-            self.L = L
+            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
+            self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
             self.Rod_Number = Nc * len(E)
-            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.E = np.tile(E*(1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
@@ -72,8 +72,8 @@ class Rod:
                 for ww in range(0, len(row_aux) - 1, 1):
                     row_columns = row_aux[ ww: ww + 2]
                     # Matrizes locais
-                    Ke = (E[i] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
-                    Me = rho[i] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
+                    Ke = (E[i] * A / L_FEM[i]) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
+                    Me = rho[i] * A * L_FEM[i]* np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
                     KGe =   Ke  
                     MGe =   Me 
                     # Montagem da matriz de massa e rigidez global
@@ -165,11 +165,11 @@ class Rod:
             self.rho = rho
             self.b = b
             self.h = h
-            self.L = L
+            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
+            self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
             self.Nc = Nc
             self.Frequency = np.arange(1, Frequency + 1)
             self.Rod_Number = Nc * len(E)
-            self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
@@ -205,7 +205,7 @@ class Rod:
 
                     K_L = omega * np.sqrt(rho[i]/E[i])  # Número de Onda da barra
 
-                    Se = (E[i] * A / L) * np.array([[K_L * L * (1/np.tan(K_L * L)), - K_L * L * (1/np.sin(K_L * L))], [- K_L * L * (1/np.sin(K_L * L)), K_L * L * (1/np.tan(K_L * L))]])
+                    Se = (E[i] * A / L[i]) * np.array([[K_L * L[i] * (1/np.tan(K_L * L)), - K_L * L[i] * (1/np.sin(K_L * L[i]))], [- K_L * L[i] * (1/np.sin(K_L * L[i])), K_L * L[i] * (1/np.tan(K_L * L[i]))]])
                     
                     # Montagem da matriz de massa e rigidez global
                     Matrix_Aux = np.zeros((3, 3), dtype= complex)    # Matriz auxiliar da rigidez
@@ -276,12 +276,13 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency,  Nos) -> None:
             self.b = b
             self.h = h
-            self.L = L
+            self.List_GL_Materials = list(range(0, self.Rod_Number_WFE  ))
+            self.L = np.tile(L, int(len(self.List_GL_Materials)/len(rho)))
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
             self.Rod_Number_WFE = len(E)
-            self.List_GL_Materials = list(range(0, self.Rod_Number_WFE  ))
+
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
@@ -339,8 +340,8 @@ class Rod:
                 for ww in range(0, len(row_aux) - 1, 1):
                     row_columns = row_aux[ ww: ww + 2]
                     # Matrizes locais
-                    Ke = (E[i] * A / L_FEM) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
-                    Me = rho[i] * A * L_FEM * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
+                    Ke = (E[i] * A / L_FEM[i]) * np.array([[1/2, -1/2], [-1/2, 1/2]])  # Matriz de rigidez local
+                    Me = rho[i] * A * L_FEM[i] * np.array([[2/3, 1/3], [1/3, 2/3]])  # Matriz de Massa loca
 
                     KGe =   Ke  
                     MGe =   Me 
@@ -522,7 +523,7 @@ class Rod:
                     elif Type == 'Transmitancia':
                         u[0, i -1] = qe[0,-1] / qe[0,0]
                     elif Type == 'Acelerancia' :
-                        u[0, i -1] = - omega ** 2 * qe[0,-1]
+                        u[0, i -1] = (- omega ** 2) * qe[0,-1]
                     else:
                         raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
