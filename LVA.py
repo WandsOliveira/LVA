@@ -162,8 +162,6 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency) -> None:
 
             self.E = E * (1 + 1j * eta)
-            print(E)
-            print(self.E)
             self.rho = rho
             self.b = b
             self.h = h
