@@ -150,8 +150,8 @@ class Rod:
                     elif Type == 'Transmitancia' :
                         u[0, i -1] = U[self.u_max] / U[0]
                     
-                    elif Type == 'FRF' :
-                        u[0, i -1] = np.linalg.inv(D)
+                    elif Type == 'Acelerancia' :
+                        u[0, i -1] = - omega ** 2 * U[self.u_max] 
                     else:
                         raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
@@ -264,8 +264,8 @@ class Rod:
                             u[0, i -1] = U[self.u_max_SEM]
                         elif Type == 'Transmitancia' :
                             u[0, i -1] = U[self.u_max_SEM] / U[0]
-                        elif Type == 'FRF' :
-                             u[0, i -1] = np.linalg.inv(D)
+                        elif Type == 'Acelerancia' :
+                            u[0, i -1] = - omega ** 2 * U[self.u_max] 
                         else:
                             raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
