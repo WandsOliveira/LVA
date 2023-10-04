@@ -521,6 +521,8 @@ class Rod:
                         u[0, i -1] = qe[0,-1]
                     elif Type == 'Transmitancia':
                         u[0, i -1] = qe[0,-1] / qe[0,0]
+                    elif Type == 'Acelerancia' :
+                        u[0, i -1] = - omega ** 2 * qe[0,-1]
                     else:
                         raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
