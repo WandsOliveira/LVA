@@ -20,12 +20,12 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Nos) -> None:
             self.b = b
             self.h = h
+            self.Rod_Number = Nc * len(E)
             self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number = Nc * len(E)
             self.E = np.tile(E*(1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
@@ -165,11 +165,11 @@ class Rod:
             self.rho = rho
             self.b = b
             self.h = h
+            self.Rod_Number = Nc * len(E)
             self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
             self.Nc = Nc
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number = Nc * len(E)
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
@@ -276,13 +276,12 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency,  Nos) -> None:
             self.b = b
             self.h = h
+            self.Rod_Number_WFE = len(E)
             self.List_GL_Materials = list(range(0, self.Rod_Number_WFE  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(rho)))
             self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
-            self.Rod_Number_WFE = len(E)
-
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
             self.A = self.b * self.h  # Área
