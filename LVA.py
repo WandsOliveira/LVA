@@ -20,10 +20,10 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency, Nos) -> None:
             self.b = b
             self.h = h
+            self.Nc = Nc
             self.Rod_Number = Nc * len(E)
             self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
-            self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
             self.E = np.tile(E*(1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
@@ -162,13 +162,15 @@ class Rod:
         def __init__(self, E, rho, eta, b, h, L, Nc, Frequency) -> None:
 
             self.E = E * (1 + 1j * eta)
+            print(E)
+            print(self.E)
             self.rho = rho
             self.b = b
             self.h = h
+            self.Nc = Nc
             self.Rod_Number = Nc * len(E)
             self.List_GL_Materials = list(range(0, self.Rod_Number  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(E)))
-            self.Nc = Nc
             self.Frequency = np.arange(1, Frequency + 1)
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
             self.rho = np.tile(rho, int(len(self.List_GL_Materials)/len(rho)))
@@ -181,6 +183,7 @@ class Rod:
             self.GL_Elemento_SEM = np.zeros((self.Rod_Number, self.Gdl * (2 + (self.Elementos_SEM - 1))))
             self.GDL_Principais_SEM = np.arange(0, self.Nos_Principais_SEM)
             self.u_max_SEM = self.GDL_Principais_SEM[-1]
+
             # Preenchimento dos nós principais
             vv = 0
             for ii in range(self.Rod_Number):
@@ -204,8 +207,8 @@ class Rod:
 
 
                     K_L = omega * np.sqrt(rho[i]/E[i])  # Número de Onda da barra
-
-                    Se = (E[i] * A / L[i]) * np.array([[K_L * L[i] * (1/np.tan(K_L * L)), - K_L * L[i] * (1/np.sin(K_L * L[i]))], [- K_L * L[i] * (1/np.sin(K_L * L[i])), K_L * L[i] * (1/np.tan(K_L * L[i]))]])
+                    Se = np.zeros((4, 4), dtype = complex)
+                    Se = (E[i] * A / L[i]) * np.array([[K_L * L[i] * (1/np.tan(K_L * L[i])), - K_L * L[i] * (1/np.sin(K_L * L[i]))], [- K_L * L[i] * (1/np.sin(K_L * L[i])), K_L * L[i] * (1/np.tan(K_L * L[i]))]])
                     
                     # Montagem da matriz de massa e rigidez global
                     Matrix_Aux = np.zeros((3, 3), dtype= complex)    # Matriz auxiliar da rigidez
@@ -277,9 +280,9 @@ class Rod:
             self.b = b
             self.h = h
             self.Rod_Number_WFE = len(E)
+            self.Nc = Nc
             self.List_GL_Materials = list(range(0, self.Rod_Number_WFE  ))
             self.L = np.tile(L, int(len(self.List_GL_Materials)/len(rho)))
-            self.Nc = Nc
             self.Nos = Nos
             self.Frequency = np.arange(1, Frequency + 1)
             self.E = np.tile(E * (1 + 1j*eta), int(len(self.List_GL_Materials)/len(E)))
