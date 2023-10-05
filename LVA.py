@@ -57,7 +57,7 @@ class Rod:
                     zz += 1 
 
             self.GL_Elemento = self.GL_Elemento + M_aux
-
+    
             self.KG, self.MG = self.Barra_Matriz_Massa_Rigidez_Global(self.E, self.rho, self.L_FEM, self.A, self.Rod_Number, self.GL_Elemento, self.Global_FEM)
         def Barra_Matriz_Massa_Rigidez_Global(self, E, rho, L_FEM, A, Beam_Number, GL_Elemento, Global):
             ## Alocação de memoria matrizes de Massa e Rigidez
@@ -151,7 +151,7 @@ class Rod:
                         u[0, i -1] = U[self.u_max] / U[0]
                     
                     elif Type == 'Acelerancia' :
-                        u[0, i -1] = - omega ** 2 * U[self.u_max] 
+                        u[0, i -1] = - omega ** 2 * U[self.u_max] / U[0]
                     else:
                         raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
@@ -181,15 +181,12 @@ class Rod:
             self.GL_Elemento_SEM = np.zeros((self.Rod_Number, self.Gdl * (2 + (self.Elementos_SEM - 1))))
             self.GDL_Principais_SEM = np.arange(0, self.Nos_Principais_SEM)
             self.u_max_SEM = self.GDL_Principais_SEM[-1]
-
             # Preenchimento dos nós principais
             vv = 0
             for ii in range(self.Rod_Number):
                 self.GL_Elemento_SEM[ii, 0] = self.GDL_Principais_SEM[vv]
                 self.GL_Elemento_SEM[ii, -1] = self.GDL_Principais_SEM[vv + 1]
                 vv = vv + 1
-
-
 
 
         def Spectral_Dynamics_Matrix(self, E, rho, L, A, Rod_Number, GL_Elemento_SEM, Global_SEM, omega):
@@ -266,7 +263,7 @@ class Rod:
                         elif Type == 'Transmitancia' :
                             u[0, i -1] = U[self.u_max_SEM] / U[0]
                         elif Type == 'Acelerancia' :
-                            u[0, i -1] = - omega ** 2 * U[self.u_max_SEM] 
+                            u[0, i -1] = - omega ** 2 * U[self.u_max_SEM] / U[0]
                         else:
                             raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
@@ -313,7 +310,6 @@ class Rod:
                     zz += 1 
 
             self.GL_Elemento_WFE = self.GL_Elemento_WFE + M_aux
-
             self.nl = np.array(self.GL_Elemento_WFE[0,0])
             self.nl = self.nl.astype(int)
             self.nr = np.array(self.GL_Elemento_WFE[-1, -1])
@@ -324,9 +320,7 @@ class Rod:
             self.ni = self.ni[self.ni != self.nr] 
             self.ni = self.ni.astype(int)
             self.ni = np.unique(self.ni)
-
-
-
+            
             self.KG_WFE, self.MG_WFE = self.Barra_Matriz_Massa_Rigidez_Global(self.E, self.rho, self.L_WFE, self.A, self.Rod_Number_WFE, self.GL_Elemento_WFE, self.Global_WFE)
 
         def Barra_Matriz_Massa_Rigidez_Global(self, E, rho, L_FEM, A, Beam_Number, GL_Elemento, Global):
@@ -495,11 +489,12 @@ class Rod:
 
             qe = np.zeros(([1, Nc + 1]), dtype = complex)
             Fe = np.zeros(([1, Nc + 1]), dtype = complex)
-            for ke in range(1, Nc+2):
+            for ke in range(1, Nc +2):
                 qe[:,ke - 1] = np.dot(np.dot(phi_q, eigenvalue ** (ke -1)), Q ) + np.dot(np.dot(phi_star_q, eigenvalue ** (Nc + 1 -ke)), Q_star ) 
                 Fe[:,ke - 1] = np.dot(np.dot(phi_F, eigenvalue ** (ke -1)), Q ) + np.dot(np.dot(phi_star_F, eigenvalue ** (Nc + 1 -ke)), Q_star ) 
 
             return qe, Fe
+
         def Barra_Final_Response(self, GDL_Forca, Intensidade_Forca, Contorno_Deslocamento, Type, F0, FL):
             F0 = np.array([F0])
             FL = np.array([FL])
@@ -523,11 +518,12 @@ class Rod:
                     elif Type == 'Transmitancia':
                         u[0, i -1] = qe[0,-1] / qe[0,0]
                     elif Type == 'Acelerancia' :
-                        u[0, i -1] = (- omega ** 2) * qe[0,-1]
+                        u[0, i -1] = (- omega ** 2) * qe[0,-1] / qe[0,0]
                     else:
                         raise ValueError("Tipo de plot inválido!")
                 except ValueError as e:
                  print(f"Erro: {e}")
 
             return  u, beta
+
                 
